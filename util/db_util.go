@@ -85,13 +85,13 @@ func copyRecords(d m.DbsData, tablename string) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var id int
-		var name string
-		err = rows.Scan(&id, &name)
-		if err != nil {
-			log.Fatal(err)
+		cols, _ := rows.Columns()
+		coltypes, _ := rows.ColumnTypes()
+
+		for i := 0; i < len(cols); i++ {
+			fmt.Printf("col %v type %v \n", cols[i], coltypes[i].Name())
 		}
-		fmt.Println(id, name)
+
 	}
 	err = rows.Err()
 	if err != nil {
