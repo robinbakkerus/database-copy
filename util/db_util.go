@@ -12,29 +12,27 @@ import (
 	// "os"
 
 	_ "github.com/mattn/go-sqlite3" // runtime
+	_ "gopkg.in/goracle.v2"         // runtime
 )
 
 // CopyTables ...
 func CopyTables(d m.DbsData) {
-
-	db, err := sql.Open(d.Source.Database, d.Source.ConnString)
-	if err != nil {
-		log.Fatal(err)
-	}
-	d.Source.Db = db
-	defer db.Close()
-
-	db2, err := sql.Open(d.Target.Database, d.Target.ConnString)
-	if err != nil {
-		log.Fatal(err)
-	}
-	d.Target.Db = db2
-	defer d.Target.Db.Close()
+	openDbs(d.Source)
+	openDbs(d.Target)
 
 	for _, tbl := range d.Tables {
 		copyRecords(d, tbl)
 	}
+}
 
+func openDbs(dbs m.Dbs) {
+	connstr := buildConnStr(dbs)
+	db, err := sql.Open(m.DbsMap[dbs.Database], connstr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	dbs.Db = db
+	defer db.Close()
 }
 
 func copyRecords(d m.DbsData, tablename string) {
@@ -94,4 +92,11 @@ func toStrValue(rawStr string, typ string) string {
 	} else {
 		return rawStr
 	}
+}
+
+func buildConnStr(dbs m.Dbs) string {
+	if dbs.Database == m.ORA {
+		return dbs.Username + "/" + dbs.Password + "@" + dbs.ConnString
+	}
+	return dbs.ConnString
 }

@@ -16,15 +16,15 @@ func ReadProps() m.DbsData {
 	fmt.Println(p)
 	data := m.DbsData{}
 
-	data.Source.Database = p.GetString("srcDbs", "")
-	data.Source.ConnString = p.GetString("srcConnStr", "")
-	data.Source.Username = p.GetString("srcUsername", "")
-	data.Source.Password = p.GetString("srcPassword", "")
+	data.Source.Database = strings.ToUpper(p.GetString("source.dbs", ""))
+	data.Source.ConnString = p.GetString("source.conn.string", "")
+	data.Source.Username = p.GetString("source.username", "")
+	data.Source.Password = p.GetString("source.password", "")
 
-	data.Target.Database = p.GetString("trgDbs", "")
-	data.Target.ConnString = p.GetString("trgConnStr", "")
-	data.Target.Username = p.GetString("trgUsername", "")
-	data.Target.Password = p.GetString("trgPassword", "")
+	data.Target.Database = strings.ToUpper(p.GetString("target.dbs", ""))
+	data.Target.ConnString = p.GetString("target.conn.string", "")
+	data.Target.Username = p.GetString("target.username", "")
+	data.Target.Password = p.GetString("target.password", "")
 
 	data.BatchSize = p.GetInt("batchSize", 1000)
 	data.Truncate = p.GetBool("truncate", true)

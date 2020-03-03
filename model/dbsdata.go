@@ -21,3 +21,11 @@ type DbsData struct {
 	BatchSize int
 	Truncate  bool
 }
+
+const ORA = "ORACLE"
+const SQLITE = "SQLITE"
+
+var DbsMap = map[string]string{
+	SQLITE: "sqlite3",
+	ORA:    "goracle",
+}

@@ -11,5 +11,4 @@ func main() {
 	data := u.ReadProps()
 
 	u.CopyTables(data)
-
 }
