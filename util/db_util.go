@@ -5,6 +5,8 @@ import (
 	"fmt"
 	m "jrb/database-copy/model"
 	"log"
+	"reflect"
+	"strings"
 
 	// "log"
 	// "os"
@@ -33,68 +35,63 @@ func CopyTables(d m.DbsData) {
 		copyRecords(d, tbl)
 	}
 
-	// tx, err := dbSrc.Begin()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// stmt, err := tx.Prepare("insert into foo(id, name) values(?, ?)")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer stmt.Close()
-	// for i := 0; i < 100; i++ {
-	// 	_, err = stmt.Exec(i, fmt.Sprintf("closing", i))
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }
-	// tx.Commit()
-
-	// _, err = db.Exec("insert into foo(id, name) values(1, 'foo'), (2, 'bar'), (3, 'baz')")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// rows, err = db.Query("select id, name from foo")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer rows.Close()
-	// for rows.Next() {
-	// 	var id int
-	// 	var name string
-	// 	err = rows.Scan(&id, &name)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	fmt.Println(id, name)
-	// }
-	// err = rows.Err()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 }
 
 func copyRecords(d m.DbsData, tablename string) {
-	fmt.Println("Copy records from " + tablename)
 
-	rows, err := d.Source.Db.Query("select * from " + tablename)
-	if err != nil {
-		log.Fatal(err)
+	var sql = "select * from " + tablename
+	rows, _ := d.Source.Db.Query(sql)
+	columns, _ := rows.Columns()
+	colNum := len(columns)
+
+	var values = make([]interface{}, colNum)
+	for i := range values {
+		var ii interface{}
+		values[i] = &ii
 	}
-	defer rows.Close()
+
+	columnNames := make([]string, 0)
+	for _, colName := range columns {
+		columnNames = append(columnNames, colName)
+	}
+	allColumnNames := strings.Join(columnNames, ",")
+
+	inserts := make([]string, 0)
+
 	for rows.Next() {
-		cols, _ := rows.Columns()
-		coltypes, _ := rows.ColumnTypes()
-
-		for i := 0; i < len(cols); i++ {
-			fmt.Printf("col %v type %v \n", cols[i], coltypes[i].Name())
-		}
-
+		vals := scanRow(rows, values, columns)
+		inserts = append(inserts, fmt.Sprintf("insert info %v (%v) values (%v) ", tablename, allColumnNames, vals))
 	}
-	err = rows.Err()
+
+	for _, str := range inserts {
+		fmt.Println(str)
+	}
+}
+
+func scanRow(rows *sql.Rows, values []interface{}, columns []string) string {
+	err := rows.Scan(values...)
+
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+	}
+
+	retvalues := make([]string, 0)
+
+	for i, colName := range columns {
+		var rawvalue = *(values[i].(*interface{}))
+		var rawtype = reflect.TypeOf(rawvalue)
+		fmt.Println(colName, rawtype, rawvalue)
+
+		retvalues = append(retvalues, toStrValue(fmt.Sprintf("%v", rawvalue), fmt.Sprintf("%v", rawtype)))
+	}
+
+	return strings.Join(retvalues, ",")
+}
+
+func toStrValue(rawStr string, typ string) string {
+	if typ == "string" {
+		return "'" + rawStr + "'"
+	} else {
+		return rawStr
 	}
 }
